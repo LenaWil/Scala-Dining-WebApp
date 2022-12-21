@@ -37,6 +37,8 @@ AUTH_USER_MODEL = 'userdetails.User'
 INSTALLED_APPS = [
     'whitenoise.runserver_nostatic',  # For static files
 
+    #'scaladining.admin.MyAdminSite',
+
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -59,6 +61,7 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.socialaccount',
     'allauthproviders.quadrivium',
+    'django_mutpy',
 ]
 
 MIDDLEWARE = [

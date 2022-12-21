@@ -43,7 +43,18 @@ class DiningList(models.Model):
                                     help_text='Owners can manage the dining list.')
 
     sign_up_deadline = models.DateTimeField(help_text="The time before users need to sign up.")
+
+    class AttrTimeField(models.TimeField):
+        def formfield(self, **kwargs):
+            return super().formfield(**{
+            **kwargs,
+        })
+        
+
     serve_time = models.TimeField(default=time(18, 00))
+
+    
+
 
     dish = models.CharField(default="", max_length=100, blank=True, help_text="The dish made")
     # The days adjustable is implemented to prevent adjustment in credits or aid due to a deletion of a user account.
