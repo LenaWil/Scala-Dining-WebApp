@@ -18,6 +18,8 @@ __pycache__/
 # Virtualenv
 /.venv/
 /venv/
+pyvenv.cfg
+/bin/
 
 # Misc
 Socrates/config.py
