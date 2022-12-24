@@ -29,6 +29,6 @@ Cooking website.
 
 To add a new dependency, append it to `requirements.in`, install `pip-tools`
 inside the virtual environment
-and run `pip-compile requirements.in`.
+and run `pip-compile requirements.in ; pip-compile dev-requirements.in`.
 See [pip-tools documentation](https://github.com/jazzband/pip-tools)
 for details.
