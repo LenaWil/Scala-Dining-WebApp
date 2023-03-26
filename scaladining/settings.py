@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'django.contrib.sites',
+    
+    'debug_toolbar',
 
     'dining.apps.DiningConfig',
     'creditmanagement.apps.CreditManagementConfig',
@@ -72,6 +74,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
 ROOT_URLCONF = 'scaladining.urls'
@@ -94,7 +97,7 @@ TEMPLATES = [
 ]
 
 # https://docs.djangoproject.com/en/4.1/ref/settings/#internal-ips
-INTERNAL_IPS = env.list('DINING_INTERNAL_IPS', default='')
+INTERNAL_IPS = env.list('DINING_INTERNAL_IPS', default='127.0.0.1')
 
 WSGI_APPLICATION = 'scaladining.wsgi.application'
 

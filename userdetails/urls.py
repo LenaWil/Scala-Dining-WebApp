@@ -1,11 +1,8 @@
 from allauth.account.views import LoginView
 from django.urls import path, include
 
-from userdetails.views import RegisterView, DiningJoinHistoryView, DiningClaimHistoryView, PeopleAutocompleteView
-from userdetails.views_association import AssociationTransactionListView, AssociationTransactionsCSVView, \
-    MembersOverview, \
-    MembersEditView, AssociationOverview, AssociationSettingsView, SiteDiningView, SiteCreditView, \
-    AutoCreateNegativeCreditsView, AssociationTransactionAddView, SiteTransactionView, SiteCreditDetailView
+from userdetails.views import DiningPayHistoryView, RegisterView, DiningJoinHistoryView, DiningClaimHistoryView, PeopleAutocompleteView
+from userdetails.views_association import AssociationTransactionListView, AssociationTransactionsCSVView, MembersOverview, MembersEditView, AssociationOverview, AssociationSettingsView, SiteDiningView, SiteCreditView, AutoCreateNegativeCreditsView, AssociationTransactionAddView, SiteTransactionView, SiteCreditDetailView
 from userdetails.views_user_settings import SettingsProfileView
 
 urlpatterns = [
@@ -31,6 +28,8 @@ urlpatterns = [
     path('statistics/', include([
         path('joined/', DiningJoinHistoryView.as_view(), name='history_lists'),
         path('joined/<int:page>/', DiningJoinHistoryView.as_view(), name='history_lists'),
+        path('unpaid/', DiningPayHistoryView.as_view(), name='debt_lists'),
+        path('unpaid/<int:page>/', DiningPayHistoryView.as_view(), name='debt_lists'),
         path('claimed/', DiningClaimHistoryView.as_view(), name='history_claimed_lists'),
         path('claimed/<int:page>/', DiningClaimHistoryView.as_view(), name='history_claimed_lists'),
     ])),

@@ -1,3 +1,4 @@
+from datetime import date
 from allauth.socialaccount.models import SocialApp
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser, Group
@@ -5,6 +6,9 @@ from django.contrib.auth.models import UserManager as DjangoUserManager, GroupMa
 from django.db import models
 from django.utils import timezone
 from django.utils.functional import cached_property
+from django.db.models import Q
+
+from dining.models import DiningEntry
 
 
 class UserManager(DjangoUserManager):
@@ -24,7 +28,7 @@ class User(AbstractUser):
         max_length=100,
         blank=True,
         help_text="E.g. gluten or vegetarian. Leave empty if not applicable.",
-        verbose_name="food allergies or preferences"
+        verbose_name="food allergies or preferences",
     )
 
     objects = UserManager()
@@ -57,11 +61,13 @@ class User(AbstractUser):
     @cached_property
     def requires_information_updates(self):
         from general.views import SiteUpdateView
+
         return SiteUpdateView.has_new_update(self)
 
     @cached_property
     def requires_information_rules(self):
         from general.views import RulesPageView
+
         return RulesPageView.has_new_update(self)
 
     def has_any_perm(self):
@@ -80,10 +86,12 @@ class User(AbstractUser):
         """Returns if user is a board member of association identified by given id."""
         return self.groups.filter(id=association_id).exists()
 
+    @cached_property
     def is_verified_member_of(self, association):
         """Returns if the user is a verified member of the association."""
         return self.get_verified_memberships().filter(association=association).exists()
 
+    @cached_property
     def get_verified_memberships(self):
         return self.usermembership_set.filter(is_verified=True)
 
@@ -94,6 +102,23 @@ class User(AbstractUser):
         """
         exceptions = [membership.association.has_min_exception for membership in self.get_verified_memberships()]
         return True in exceptions
+
+    @cached_property
+    def get_debts(self):
+        return (
+            DiningEntry.objects.complex_filter(Q(created_by=self.request.user) | Q(user=self.request.user))
+            .filter(has_paid=False)
+            .filter(dining_list__payment_link__istartswith="http")
+            .filter(dining_list__dining_cost__gt=0)
+            # the correct query would be kinda complicated and I am lazy, so here is a bad version
+            # .filter(dining_list__is_adjustable=True)
+            .filter(dining_list__date__lte=date.today() + settings.TRANSACTION_PENDING_DURATION)
+            .order_by("-dining_list__date")
+        )
+
+    @cached_property
+    def get_debt_count(self) -> int:
+        return self.get_debts().count()
 
 
 class AssociationManager(GroupManager):
@@ -106,13 +131,19 @@ class Association(Group):
     slug = models.SlugField(max_length=10)
     image = models.ImageField(blank=True, null=True)
     icon_image = models.ImageField(blank=True, null=True)
-    is_choosable = models.BooleanField(default=True,
-                                       help_text="If checked, this association can be chosen as membership by users.")
-    has_min_exception = models.BooleanField(default=False,
-                                            help_text="If checked, this association has an exception to the minimum balance.")
-    social_app = models.ForeignKey(SocialApp, on_delete=models.PROTECT, null=True, blank=True,
-                                   help_text="A user automatically becomes member of the association "
-                                             "if they sign up using this social app.")
+    is_choosable = models.BooleanField(
+        default=True, help_text="If checked, this association can be chosen as membership by users."
+    )
+    has_min_exception = models.BooleanField(
+        default=False, help_text="If checked, this association has an exception to the minimum balance."
+    )
+    social_app = models.ForeignKey(
+        SocialApp,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        help_text="A user automatically becomes member of the association " "if they sign up using this social app.",
+    )
     balance_update_instructions = models.TextField(max_length=512, default="to be defined")
     has_site_stats_access = models.BooleanField(default=False)
 

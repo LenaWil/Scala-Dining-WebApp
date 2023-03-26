@@ -1,0 +1,53 @@
+{% extends 'accounts/user_history_base.html' %}
+
+{% block title %}{{ request.user }} - Unpaid dying lists {% endblock %}
+
+{% block tab_debts %} active{% endblock %}
+
+{% block details %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+            <tr class="">
+                <td>Date</td>
+                <td>Dish</td>
+                <td>Association</td>
+                <td>Help stats</td>
+                <td>Payment link</td>
+                <td>Link</td>
+            </tr>
+            </thead>
+
+            <tbody>
+            {% for entry in object_list %}
+                <tr>
+                    <td>
+                        {{ entry.dining_list.date }}
+                    </td>
+                    <td>
+                        {{ entry.dining_list.dish }}
+                    </td>
+                    <td>
+                        {{ entry.dining_list.association.slug }}
+                    </td>
+                    <td>
+                        {% if entry.has_shopped %} Shop {% endif %}
+                        {% if entry.has_cooked %} Cook {% endif %}
+                        {% if entry.has_cleaned %} Dishes {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ entry.dining_list.payment_link }}">{{ entry.dining_list.payment_link }}</a>
+                    </td>
+
+                    <td class="py-2">
+                        <a class="btn btn-outline-primary" href="{{ entry.dining_list.get_absolute_url }}">
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'snippets/paginator.html' %}
+{% endblock %}
