@@ -8,8 +8,6 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.db.models import Q
 
-from dining.models import DiningEntry
-
 
 class UserManager(DjangoUserManager):
     def get_by_natural_key(self, username):

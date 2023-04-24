@@ -285,10 +285,10 @@ class PaymentConfirmation(models.Model):
     """A request sent by someone on the dining list to request the Dining list info to be updated."""
 
     dining_list = models.ForeignKey(DiningEntry, on_delete=models.PROTECT)
-    requesting_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    requesting_user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="sent_payment_update_requests")
     message = models.TextField()
     type = models.TextField()
     accepted = models.BooleanField()
     accepted_date = models.DateTimeField()
-    accepted_person = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    accepted_person = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="received_payment_update_requests")
     

@@ -300,7 +300,7 @@ class TestDiningEntryExternalForm(FormValidityMixin, TestCase):
         self.assertNotIn(self.user, self.dining_list.owners.all(), "Incorrect test data, user should not be owner")
         # Fill the dininglist with meaningless entries
         other_user = User.objects.get(id=1)
-        for i in range(14):
+        for _ in range(14):
             DiningEntry.objects.create(dining_list=self.dining_list, user=other_user, created_by=other_user)
         self.dining_list.max_diners = 14
 
