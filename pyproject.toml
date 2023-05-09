@@ -5,3 +5,6 @@ skip-string-normalization = true
 [tool.isort]
 profile = "pycharm"
 line_length = 127
+include_trailing_comma = true
+use_parentheses = true
+split_on_trailing_comma = true
