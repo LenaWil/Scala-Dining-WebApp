@@ -121,20 +121,20 @@ class User(AbstractUser):
         exceptions = [membership.association.has_min_exception for membership in self.get_verified_memberships()]
         return True in exceptions
 
-    @cached_property
     def get_debts(self):
+        from dining.models import DiningEntry
+
         return (
-            DiningEntry.objects.complex_filter(Q(created_by=self.request.user) | Q(user=self.request.user))
+            DiningEntry.objects.complex_filter(Q(created_by=self) | Q(user=self))
             .filter(has_paid=False)
             .filter(dining_list__payment_link__istartswith="http")
             .filter(dining_list__dining_cost__gt=0)
             # the correct query would be kinda complicated and I am lazy, so here is a bad version
             # .filter(dining_list__is_adjustable=True)
-            .filter(dining_list__date__lte=date.today() + settings.TRANSACTION_PENDING_DURATION)
+            # .filter(dining_list__date__lte=date.today() + settings.TRANSACTION_PENDING_DURATION)
             .order_by("-dining_list__date")
         )
 
-    @cached_property
     def get_debt_count(self) -> int:
         return self.get_debts().count()
 

@@ -1,6 +1,6 @@
 from datetime import timedelta
 from decimal import Decimal, ROUND_UP
-from typing import Any, List, Dict, Literal, Protocol, runtime_checkable, Literal
+from typing import Any, List, Dict, Literal, Protocol, runtime_checkable
 
 from dal_select2.widgets import ModelSelect2, ModelSelect2Multiple
 from django import forms

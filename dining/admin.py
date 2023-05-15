@@ -1,6 +1,13 @@
 from django.contrib import admin
 
-from dining.models import DiningDayAnnouncement, DiningComment, DiningList, DiningEntry, DeletedList
+from dining.models import (
+    DeletedList,
+    DiningComment,
+    DiningDayAnnouncement,
+    DiningEntry,
+    DiningList,
+    PaymentConfirmationRequests
+)
 
 
 @admin.register(DiningEntry)
@@ -50,3 +57,7 @@ class DeletedListAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+@admin.register(PaymentConfirmationRequests)
+class PaymentConfirmationRequestAdmin(admin.ModelAdmin):
+    pass
