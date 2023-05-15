@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.core.exceptions import ValidationError, MultipleObjectsReturned
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Sum
 from django.utils import timezone
@@ -42,18 +42,15 @@ class DiningList(models.Model):
     sign_up_deadline = models.DateTimeField(help_text="The time before users need to sign up.")
     serve_time = models.TimeField(default=time(18, 00))
 
-    dish = models.CharField(default="", max_length=100, blank=True, help_text="The dish made")
+    dish = models.CharField(default="", max_length=100, blank=True)
     # The days adjustable is implemented to prevent adjustment in credits or aid due to a deletion of a user account.
     # Some assumptions about this field are made in DiningPayHistoryView, be sure to edit that class too when you edit this.
     adjustable_duration = models.DurationField(
         default=settings.TRANSACTION_PENDING_DURATION,
-        help_text="The amount of time the dining list can be adjusted after its date",
-    )
+        help_text="How long the dining list can be adjusted after its date.")
     # Todo: implement limit in the views.
     limit_signups_to_association_only = models.BooleanField(
-        default=False,
-        help_text="Whether only members of the given association can sign up",
-    )
+        default=False, help_text="Whether only members of the given association can sign up.")
 
     kitchen_cost = models.DecimalField(
         decimal_places=2,
@@ -75,10 +72,9 @@ class DiningList(models.Model):
 
     auto_pay = models.BooleanField(default=False)
 
-    payment_link = models.CharField(blank=True, max_length=100, help_text="Link for payment, e.g. a Tikkie link.")
+    # Why max_length=2000? -> https://stackoverflow.com/q/417142/2373688
+    payment_link = models.URLField(blank=True, max_length=2000, help_text="Link for payment, e.g. a Tikkie link.")
 
-    # min_diners can be set to a negative value. Is not really problematic though
-    min_diners = models.IntegerField(default=4, validators=[MaxValueValidator(settings.MAX_SLOT_DINER_MINIMUM)])
     max_diners = models.IntegerField(default=20, validators=[MinValueValidator(settings.MIN_SLOT_DINER_MAXIMUM)])
 
     diners = models.ManyToManyField(User, through="DiningEntry", through_fields=("dining_list", "user"))
@@ -101,9 +97,6 @@ class DiningList(models.Model):
     is_adjustable.boolean = True
 
     def clean(self):
-        # Validate dining list can be changed.
-        if self.pk and not self.is_adjustable():
-            raise ValidationError("The dining list is not adjustable", code="closed")
         # Set sign up deadline to a default if it hasn't been set already.
         if not self.sign_up_deadline:
             self.sign_up_deadline = datetime.combine(
@@ -143,11 +136,13 @@ class DiningList(models.Model):
 
     def clean_fields(self, exclude=None):
         super().clean_fields(exclude=exclude)
-        # Valid sign up deadline
-        if not exclude or "sign_up_deadline" not in exclude:
+        # Validate sign up deadline.
+        #
+        # We can't put this in clean(), because then forms which put this field in the exclude list break.
+        if not exclude or 'sign_up_deadline' not in exclude:
             if self.sign_up_deadline and self.sign_up_deadline.date() > self.date:
                 raise ValidationError(
-                    {"sign_up_deadline": ["Sign up deadline can't be later than the day dinner is served"]}
+                    {'sign_up_deadline': ["Sign up deadline can't be later than the day dinner is served."]}
                 )
 
 
@@ -279,6 +274,18 @@ class PaymentReminderLock(models.Model):
     # We use primary_key=True to prevent an unnecessary auto id column.
     dining_list = models.OneToOneField(DiningList, on_delete=models.CASCADE, primary_key=True)  # Key
     sent = models.DateTimeField(null=True)  # Value
+
+
+class DeletedList(models.Model):
+    """For audit purposes, keep a log of deleted dining lists."""
+    deleted_by = models.ForeignKey(User, on_delete=models.PROTECT)
+    date = models.DateTimeField('deletion date', default=timezone.now)
+    reason = models.TextField()
+    json_list = models.TextField('JSON dining list')
+    json_diners = models.TextField('JSON dining entries')
+
+    def __str__(self):
+        return f'Deleted on {self.date.date()} by {self.deleted_by}'
 
 
 class PaymentConfirmation(models.Model):

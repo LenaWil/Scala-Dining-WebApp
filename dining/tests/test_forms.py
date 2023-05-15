@@ -384,13 +384,38 @@ class TestDiningEntryDeleteForm(FormValidityMixin, TestCase):
 
         self.assertFalse(DiningEntry.objects.filter(id=self.entry.id).exists())
 
-    @patch_time(dt=datetime(2022, 4, 26, 14, 23))
-    def test_db_transacton_deletion(self):
-        self.assertFormValid({}).execute()
-        self.entry.transaction.refresh_from_db()
+    def test_db_transaction_deletion(self):
+        """Tests that a reversal transaction is created upon deletion."""
+        # We create a new user because the user created in setUp() already has transactions.
+        user = User.objects.create_user('user345876')
 
-        self.assertEqual(self.entry.transaction.cancelled, timezone.make_aware(datetime(2022, 4, 26, 14, 23)))
-        self.assertEqual(self.entry.transaction.cancelled_by, self.user)
+        # We create a new dining list because self.dining_list is not adjustable which makes the form invalid.
+        dining_list = DiningList.objects.create(
+            date=date(2123, 4, 5),
+            sign_up_deadline=datetime(2123, 4, 5, tzinfo=timezone.utc),
+            association=self.dining_list.association
+        )
+
+        # We manually create the entry and transaction, so that our test doesn't depend on other code.
+        entry = DiningEntry.objects.create(
+            dining_list=dining_list,
+            user=user,
+            created_by=user,
+            transaction=Transaction.objects.create(
+                source=user.account,
+                target=Account.objects.get(special='kitchen_cost'),
+                amount=Decimal('2.18'),
+                created_by=user
+            )
+        )
+        # Confirm our balance is negative
+        self.assertEqual(user.account.get_balance(), Decimal('-2.18'))
+        # Execute form
+        form = DiningEntryDeleteForm(entry, user, {})
+        self.assertTrue(form.is_valid())
+        form.execute()
+        # Assert that our balance is now zero
+        self.assertEqual(user.account.get_balance(), Decimal('0.00'))
 
     @patch_time(dt=datetime(2022, 4, 26, 18, 0))
     def test_sign_up_deadline(self):
@@ -420,8 +445,7 @@ class TestDiningListDeleteForm(FormValidityMixin, TestCase):
 
     def get_form_kwargs(self, **kwargs):
         kwargs.setdefault('instance', self.dining_list)
-        kwargs.setdefault('deleted_by', self.user)
-        return super(TestDiningListDeleteForm, self).get_form_kwargs(**kwargs)
+        return super().get_form_kwargs(**kwargs)
 
     @patch_time()
     def test_form_valid(self):
@@ -431,7 +455,7 @@ class TestDiningListDeleteForm(FormValidityMixin, TestCase):
     @patch_time()
     def test_db_list_deletion(self):
         dining_list_id = self.dining_list.id
-        self.assertFormValid({}).execute()
+        self.assertFormValid({}).execute(self.user)
 
         self.assertFalse(DiningEntry.objects.filter(dining_list__id=dining_list_id).exists())
 
@@ -439,20 +463,14 @@ class TestDiningListDeleteForm(FormValidityMixin, TestCase):
     def test_db_transaction_cancellation(self):
         """Tests that the correct transactions are cancelled."""
         diner_count = self.dining_list.dining_entries.count()
-        old_cancelled_transaction_count = Transaction.objects.filter(cancelled__isnull=False).count()
+        old_cancelled_transaction_count = Transaction.objects.filter().count()
 
-        self.assertFormValid({}).execute()
+        self.assertFormValid({}).execute(self.user)
 
-        # Ensure that the
         self.assertEqual(
-            Transaction.objects.filter(cancelled__isnull=False).count(),
+            Transaction.objects.filter().count(),
             old_cancelled_transaction_count + diner_count
         )
-
-    @patch_time()
-    def test_owner_deletion(self):
-        self.dining_list.owners.clear()
-        self.assertFormHasError({}, code="not_owner")
 
     def test_form_editing_time_limit(self):
         """Asserts that the form can not be used after the timelimit."""
@@ -487,7 +505,6 @@ class TestDiningInfoForm(FormValidityMixin, TestCase):
             'owners': [1],
             'dish': "My delicious dish",
             'serve_time': time(18, 00),
-            'min_diners': 4,
             'max_diners': 15,
             'sign_up_deadline': datetime(2022, 4, 26, 15, 0),
         })
@@ -498,7 +515,6 @@ class TestDiningInfoForm(FormValidityMixin, TestCase):
             'owners': [4],
             'dish': "New dish",
             'serve_time': time(17, 5),
-            'min_diners': 6,
             'max_diners': 14,
             'sign_up_deadline': datetime(2022, 4, 26, 12, 00),
         }).save()
@@ -510,19 +526,8 @@ class TestDiningInfoForm(FormValidityMixin, TestCase):
         self.assertIn(User.objects.get(id=4), updated_dining_list.owners.all())
         self.assertEqual(updated_dining_list.dish, "New dish")
         self.assertEqual(updated_dining_list.serve_time, time(17, 5))
-        self.assertEqual(updated_dining_list.min_diners, 6)
         self.assertEqual(updated_dining_list.max_diners, 14)
         self.assertNotEqual(updated_dining_list.sign_up_deadline.time(), self.dining_list.sign_up_deadline)
-
-    def test_form_editing_time_limit(self):
-        """Asserts that the form can not be used after the timelimit."""
-        # Set the dining list to an old date and assert that we have a 'closed' error.
-        self.dining_list.date = date(2000, 1, 1)
-        form = DiningInfoForm({'dish': 'Test'}, instance=self.dining_list)
-        self.assertTrue(form.has_error(NON_FIELD_ERRORS, code='closed'))
-
-        # Note: this tests the DiningList.clean() method and thus should be there instead of
-        # on DiningInfoForm.
 
     def test_kitchen_open_time_validity(self):
         """Asserts that the meal can't be served before the kitchen opening time."""
