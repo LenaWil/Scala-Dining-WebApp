@@ -6,4 +6,5 @@ coverage
 django-debug-toolbar
 autopep8
 isort
-flake8-import-order
+black
+pre-commit

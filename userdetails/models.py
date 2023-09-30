@@ -1,13 +1,14 @@
 from datetime import date
+
 from allauth.socialaccount.models import SocialApp
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser, Group
-from django.contrib.auth.models import UserManager as DjangoUserManager, GroupManager
+from django.contrib.auth.models import AbstractUser, Group, GroupManager
+from django.contrib.auth.models import UserManager as DjangoUserManager
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.functional import cached_property
-from django.db.models import Q
 
 
 class UserManager(DjangoUserManager):
@@ -47,12 +48,18 @@ class User(AbstractUser):
         if self.pk:
             qs = qs.exclude(pk=self.pk)
         if qs.exists():
-            raise ValidationError({
-                'username': ValidationError('A user with that username already exists.', code='unique'),
-            })
+            raise ValidationError(
+                {
+                    "username": ValidationError(
+                        "A user with that username already exists.", code="unique"
+                    ),
+                }
+            )
 
     def __str__(self):
-        return "{} {}".format(self.first_name, self.last_name).strip() or "@{}".format(self.username)
+        return "{} {}".format(self.first_name, self.last_name).strip() or "@{}".format(
+            self.username
+        )
 
     def is_verified(self):
         """Whether this user is verified as part of a Scala association."""
@@ -109,7 +116,6 @@ class User(AbstractUser):
         """Returns if the user is a verified member of the association."""
         return self.get_verified_memberships().filter(association=association).exists()
 
-    @cached_property
     def get_verified_memberships(self):
         return self.usermembership_set.filter(is_verified=True)
 
@@ -118,7 +124,10 @@ class User(AbstractUser):
 
         For this to hold, the association membership must be verified.
         """
-        exceptions = [membership.association.has_min_exception for membership in self.get_verified_memberships()]
+        exceptions = [
+            membership.association.has_min_exception
+            for membership in self.get_verified_memberships()
+        ]
         return True in exceptions
 
     def get_debts(self):
@@ -150,19 +159,24 @@ class Association(Group):
     image = models.ImageField(blank=True, null=True)
     icon_image = models.ImageField(blank=True, null=True)
     is_choosable = models.BooleanField(
-        default=True, help_text="If checked, this association can be chosen as membership by users."
+        default=True,
+        help_text="If checked, this association can be chosen as membership by users.",
     )
     has_min_exception = models.BooleanField(
-        default=False, help_text="If checked, this association has an exception to the minimum balance."
+        default=False,
+        help_text="If checked, this association has an exception to the minimum balance.",
     )
     social_app = models.ForeignKey(
         SocialApp,
         on_delete=models.PROTECT,
         null=True,
         blank=True,
-        help_text="A user automatically becomes member of the association " "if they sign up using this social app.",
+        help_text="A user automatically becomes member of the association "
+        "if they sign up using this social app.",
     )
-    balance_update_instructions = models.TextField(max_length=512, default="to be defined")
+    balance_update_instructions = models.TextField(
+        max_length=512, default="to be defined"
+    )
     has_site_stats_access = models.BooleanField(default=False)
 
     objects = AssociationManager()
@@ -176,7 +190,9 @@ class Association(Group):
         return self.has_new_member_requests()
 
     def has_new_member_requests(self):
-        return UserMembership.objects.filter(association=self, verified_on__isnull=True).exists()
+        return UserMembership.objects.filter(
+            association=self, verified_on__isnull=True
+        ).exists()
 
 
 class UserMembership(models.Model):
@@ -207,7 +223,9 @@ class UserMembership(models.Model):
         return True
 
     def __str__(self):
-        return "{user} - {association}".format(user=self.related_user, association=self.association)
+        return "{user} - {association}".format(
+            user=self.related_user, association=self.association
+        )
 
     def set_verified(self, verified):
         """Sets the verified state to the value of verified (True or False) and set verified_on to now and save."""
