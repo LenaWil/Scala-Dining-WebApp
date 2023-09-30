@@ -111,7 +111,6 @@ class User(AbstractUser):
         """Returns if user is a board member of association identified by given id."""
         return self.groups.filter(id=association_id).exists()
 
-    @cached_property
     def is_verified_member_of(self, association):
         """Returns if the user is a verified member of the association."""
         return self.get_verified_memberships().filter(association=association).exists()
