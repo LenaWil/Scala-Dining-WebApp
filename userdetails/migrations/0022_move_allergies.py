@@ -31,3 +31,6 @@ class Migration(migrations.Migration):
         # We do not provide reverse_code, so the migration is irreversible.
         migrations.RunPython(forwards, backwards, elidable=True)
     ]
+
+
+# todo: change

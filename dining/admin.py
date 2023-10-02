@@ -6,6 +6,7 @@ from dining.models import (
     DiningDayAnnouncement,
     DiningEntry,
     DiningList,
+    PaymentConfirmationRequests,
 )
 
 
@@ -69,3 +70,8 @@ class DeletedListAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+
+@admin.register(PaymentConfirmationRequests)
+class PaymentConfirmationRequestAdmin(admin.ModelAdmin):
+    pass

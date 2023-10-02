@@ -4,6 +4,7 @@ from django.urls import include, path
 from userdetails.views import (
     DiningClaimHistoryView,
     DiningJoinHistoryView,
+    DiningPayHistoryView,
     PeopleAutocompleteView,
     RegisterView,
 )

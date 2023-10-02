@@ -6,6 +6,11 @@
 
     <ul class="nav nav-tabs mb-3">
         <li class="nav-item">
+            <a class="nav-link{% block tab_debts %}{% endblock %}"
+               href="{% url 'debt_lists' %}">Unpaid lists
+            </a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link{% block tab_joined %}{% endblock %}"
                href="{% url 'history_lists' %}">Joined lists
             </a>

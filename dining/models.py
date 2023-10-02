@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Sum
+from django.db.models import QuerySet, Sum
 from django.utils import timezone
 
 from creditmanagement.models import Transaction
@@ -31,7 +31,7 @@ class DiningListManager(models.Manager):
 class DiningList(models.Model):
     """A single dining list (slot) model.
 
-    The following fields may not be changed after creation: kitchen_cost!
+    The following fields may not be changed after creation: kitchen_cost, date!
     """
 
     date = models.DateField()
@@ -52,6 +52,7 @@ class DiningList(models.Model):
 
     dish = models.CharField(default="", max_length=100, blank=True)
     # The days adjustable is implemented to prevent adjustment in credits or aid due to a deletion of a user account.
+    # Some assumptions about this field are made in DiningPayHistoryView, be sure to edit that class too when you edit this.
     adjustable_duration = models.DurationField(
         default=settings.TRANSACTION_PENDING_DURATION,
         help_text="How long the dining list can be adjusted after its date.",
@@ -167,10 +168,10 @@ class DiningList(models.Model):
 
 
 class DiningEntryManager(models.Manager):
-    def internal(self):
+    def internal(self) -> QuerySet:
         return self.filter(external_name="")
 
-    def external(self):
+    def external(self) -> QuerySet:
         return self.exclude(external_name="")
 
 
@@ -329,3 +330,24 @@ class DeletedList(models.Model):
 
     def __str__(self):
         return f"Deleted on {self.date.date()} by {self.deleted_by}"
+
+
+class PaymentConfirmationRequests(models.Model):
+    """A request sent by someone on the dining list to request the Dining list info to be updated."""
+
+    dining_list = models.ForeignKey(DiningEntry, on_delete=models.PROTECT)
+    requesting_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="sent_payment_update_requests",
+    )
+    requested_date = models.DateTimeField()
+    message = models.TextField()
+    type = models.TextField()
+    accepted = models.BooleanField()
+    accepted_date = models.DateTimeField()
+    accepted_person = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="received_payment_update_requests",
+    )

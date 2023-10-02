@@ -6,3 +6,11 @@ line-length = 88
 profile = "black"
 line_length = 88
 # extend_skip_glob = ["*/migrations/*.py"]
+
+[tool.mypy]
+plugins = ["mypy_django_plugin.main"]
+implicit_optional = true
+strict_optional = false
+
+[tool.django-stubs]
+django_settings_module = "scaladining.settings"

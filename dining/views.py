@@ -22,6 +22,7 @@ from django.views.generic.detail import SingleObjectMixin
 from dining.datesequence import sequenced_date
 from dining.forms import (
     CreateSlotForm,
+    DebtPaidForm,
     DiningCommentForm,
     DiningEntryDeleteForm,
     DiningEntryExternalForm,
@@ -642,6 +643,11 @@ class SlotPaymentView(SlotMixin, SlotOwnerMixin, FormView):
         else:
             messages.success(self.request, "Diners have been informed")
         return super().form_valid(form)
+
+
+class DebtPaidFormView(FormView):
+    form_class = DebtPaidForm
+    # todo: finish, look at SlotInfoView
 
 
 class StatisticsView(LoginRequiredMixin, TemplateView):

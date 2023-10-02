@@ -3,6 +3,7 @@ flake8
 flake8-docstrings
 pep8-naming
 coverage
+django-debug-toolbar
 autopep8
 isort
 black

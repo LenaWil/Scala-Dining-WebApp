@@ -21,7 +21,7 @@ MINIMUM_BALANCE_FOR_DINING_SIGN_UP = Decimal("-2.00") + KITCHEN_COST
 MINIMUM_BALANCE_FOR_DINING_SLOT_CLAIM = Decimal("-2.00") + KITCHEN_COST
 
 # The duration that pending transactions should last
-TRANSACTION_PENDING_DURATION = timedelta(days=2)
+TRANSACTION_PENDING_DURATION = timedelta(days=14)
 
 # Membership change settings
 DURATION_AFTER_MEMBERSHIP_CONFIRMATION = timedelta(days=30)

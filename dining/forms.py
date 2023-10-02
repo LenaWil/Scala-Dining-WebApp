@@ -1,6 +1,6 @@
 from datetime import timedelta
 from decimal import ROUND_UP, Decimal
-from typing import Dict, List, Literal
+from typing import Any, Dict, List, Literal, Protocol, runtime_checkable
 
 from dal_select2.widgets import ModelSelect2, ModelSelect2Multiple
 from django import forms
@@ -20,6 +20,7 @@ from dining.models import (
     DiningComment,
     DiningEntry,
     DiningList,
+    PaymentConfirmationRequests,
     PaymentReminderLock,
 )
 from general.forms import ConcurrenflictFormMixin
@@ -29,6 +30,7 @@ from userdetails.models import Association, User, UserMembership
 
 __all__ = [
     "CreateSlotForm",
+    "DebtPaidForm",
     "DiningInfoForm",
     "DiningPaymentForm",
     "DiningEntryInternalForm",
@@ -51,10 +53,16 @@ def _clean_form(form):
         raise ValidationError(validation_errors)
 
 
+@runtime_checkable
+class SlotFormProtocol(Protocol):
+    cleaned_data: Dict[Any, Any]
+    fields: Dict[str, Any]
+
+
 class ServeTimeCheckMixin:
     """Mixin which gives errors on the serve_time if it is not within the kitchen opening hours."""
 
-    def clean_serve_time(self):
+    def clean_serve_time(self: SlotFormProtocol):
         serve_time = self.cleaned_data["serve_time"]
         if serve_time < settings.KITCHEN_USE_START_TIME:
             raise ValidationError(
@@ -66,7 +74,12 @@ class ServeTimeCheckMixin:
             )
         return serve_time
 
-    def set_bounds(self, field: str, attr: Literal["max"] | Literal["min"], value: str):
+    def set_bounds(
+        self: SlotFormProtocol,
+        field: str,
+        attr: Literal["max"] | Literal["min"],
+        value: str,
+    ):
         """Sets frontend-side bounds to make the filling in of the forms slightly more user-friendly.
 
         Args:
@@ -663,3 +676,10 @@ class SendReminderForm(forms.Form):
                 lock.save()
                 mail.get_connection().send_messages(self.construct_messages(request))
                 return True
+
+
+class DebtPaidForm(forms.ModelForm):
+    class Meta:
+        model = PaymentConfirmationRequests
+        fields = ["dining_list", "type", "message"]
+    # todo: finish, look at DiningListDeleteForm
