@@ -1,6 +1,3 @@
-from datetime import datetime, timedelta
-from typing import cast
-
 from dal_select2.views import Select2QuerySetView
 from django.contrib.auth import login
 from django.contrib.auth.mixins import LoginRequiredMixin

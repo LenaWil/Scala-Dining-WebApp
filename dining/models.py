@@ -5,7 +5,7 @@ from django.conf import settings
 from django.core.exceptions import MultipleObjectsReturned, ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Sum
+from django.db.models import QuerySet, Sum
 from django.utils import timezone
 
 from creditmanagement.models import Transaction
@@ -168,10 +168,10 @@ class DiningList(models.Model):
 
 
 class DiningEntryManager(models.Manager):
-    def internal(self):
+    def internal(self) -> QuerySet:
         return self.filter(external_name="")
 
-    def external(self):
+    def external(self) -> QuerySet:
         return self.exclude(external_name="")
 
 

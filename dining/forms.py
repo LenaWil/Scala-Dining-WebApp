@@ -20,6 +20,7 @@ from dining.models import (
     DiningComment,
     DiningEntry,
     DiningList,
+    PaymentConfirmationRequests,
     PaymentReminderLock,
 )
 from general.forms import ConcurrenflictFormMixin
@@ -29,6 +30,7 @@ from userdetails.models import Association, User, UserMembership
 
 __all__ = [
     "CreateSlotForm",
+    "DebtPaidForm",
     "DiningInfoForm",
     "DiningPaymentForm",
     "DiningEntryInternalForm",
@@ -677,4 +679,7 @@ class SendReminderForm(forms.Form):
 
 
 class DebtPaidForm(forms.ModelForm):
-    pass
+    class Meta:
+        model = PaymentConfirmationRequests
+        fields = ["dining_list", "type", "message"]
+    # todo: finish, look at DiningListDeleteForm
